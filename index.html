@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MetaMask Integration</title>
+        <title>Calling Smart Contracts</title>
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
         <style>
@@ -68,8 +68,8 @@
             .row button {
                 flex: 1;
                 margin-right: 10px;
+                align-self: center; /* Center align the items vertically */
             }
-
             .row label {
                 margin-bottom: 0; /* Align labels properly with inputs */
             }
@@ -78,24 +78,45 @@
             .row :last-child {
                 margin-right: 0;
             }
+
+            .connect-section {
+                display: flex;
+                align-items: center;
+                gap: 10px; /* Adjust the space between button and status text */
+            }
+
+            #connectWallet {
+                padding: 10px 20px; /* Adjust padding as needed */
+                flex-grow: 10; /* Prevent the button from taking the full width */
+            }
+
+            .connectionStatus {
+                margin-left: 10px;
+                flex-grow: 1;
+                text-align: left;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h2>MetaMask Integration</h2>
-            <button id="connectWallet">Connect to MetaMask</button><br /><br />
-            <p id="connectionStatus" style="color: red">Not Connected</p>
+            <h2>Calling Smart Contracts</h2>
+            <div class="row">
+                <div class="connect-section">
+                    <button id="connectWallet">Connect to MetaMask</button>
+                    <p id="connectionStatus" style="color: red">Not Connected</p>
+                </div>
+            </div>
             <div class="row">
                 <label for="contractName">Contract Name:</label>
                 <input type="text" id="contractName" placeholder="Contract Name" />
 
-                <label for="contractAddress">Smart Contract Address:</label>
-                <input type="text" id="contractAddress" placeholder="Smart Contract Address" />
+                <label for="contractAddress">Contract Address:</label>
+                <input type="text" id="contractAddress" placeholder="Contract Address" />
             </div>
             <label for="abi">ABI:</label>
             <textarea id="abi" placeholder="ABI"></textarea>
 
-            <button id="saveContract">Save Contract Info</button><br /><br />
+            <button id="saveContract">Save</button><br /><br />
             <div class="row">
                 <label for="contractSelector">Select Contract:</label>
                 <select id="contractSelector">
