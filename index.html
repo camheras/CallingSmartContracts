@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MetaMask Integration</title>
+        <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                padding: 20px;
+            }
+            .container {
+                max-width: 600px;
+                margin: auto;
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            input[type="text"],
+            textarea {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            button {
+                background-color: #4caf50;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 10px;
+            }
+            button:hover {
+                background-color: #45a049;
+            }
+            label {
+                display: block;
+                margin-top: 20px;
+            }
+            select {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                font-size: 16px;
+            }
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+
+            .row label,
+            .row input,
+            .row select,
+            .row button {
+                flex: 1;
+                margin-right: 10px;
+            }
+
+            .row label {
+                margin-bottom: 0; /* Align labels properly with inputs */
+            }
+
+            /* Add this to ensure the last item in the row doesn't have extra margin */
+            .row :last-child {
+                margin-right: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>MetaMask Integration</h2>
+            <button id="connectWallet">Connect to MetaMask</button><br /><br />
+            <p id="connectionStatus" style="color: red">Not Connected</p>
+            <div class="row">
+                <label for="contractName">Contract Name:</label>
+                <input type="text" id="contractName" placeholder="Contract Name" />
+
+                <label for="contractAddress">Smart Contract Address:</label>
+                <input type="text" id="contractAddress" placeholder="Smart Contract Address" />
+            </div>
+            <label for="abi">ABI:</label>
+            <textarea id="abi" placeholder="ABI"></textarea>
+
+            <button id="saveContract">Save Contract Info</button><br /><br />
+            <div class="row">
+                <label for="contractSelector">Select Contract:</label>
+                <select id="contractSelector">
+                    <option value="">Select a contract</option>
+                    <!-- Contract options will be dynamically populated here -->
+                </select>
+                <button id="clearContracts">Clear All Contracts</button>
+            </div>
+            <label for="methodName">Method Name:</label>
+            <input type="text" id="methodName" placeholder="Method Name" />
+
+            <label for="methodParams">Parameters (comma-separated):</label>
+            <input type="text" id="methodParams" placeholder="Parameters (comma-separated)" /><br />
+
+            <button id="callMethod">Call Method</button>
+
+            <div id="methodResult"></div>
+        </div>
+
+        <script>
+            const connectWalletButton = document.getElementById("connectWallet")
+            const saveContractButton = document.getElementById("saveContract")
+            const callMethodButton = document.getElementById("callMethod")
+            const contractNameInput = document.getElementById("contractName")
+            const contractAddressInput = document.getElementById("contractAddress")
+            const abiTextarea = document.getElementById("abi")
+            const methodNameInput = document.getElementById("methodName")
+            const methodParamsInput = document.getElementById("methodParams")
+            const searchButton = document.getElementById("searchButton")
+            const searchContractInput = document.getElementById("searchContract")
+            const contractSelector = document.getElementById("contractSelector")
+            const clearContractsButton = document.getElementById("clearContracts")
+
+            let currentContract
+            let web3
+            let selectedAccount
+
+            if (typeof window.ethereum !== "undefined") {
+                web3 = new Web3(window.ethereum)
+            } else {
+                alert("MetaMask is not available")
+            }
+
+            function populateContractDropdown() {
+                const contracts = JSON.parse(localStorage.getItem("contracts")) || {}
+                contractSelector.innerHTML = '<option value="">Select a contract</option>' // Reset dropdown
+
+                for (let contractName in contracts) {
+                    const option = document.createElement("option")
+                    option.value = contractName
+                    option.textContent = contractName
+                    contractSelector.appendChild(option)
+                }
+            }
+
+            window.onload = function () {
+                populateContractDropdown()
+                const savedContracts = JSON.parse(localStorage.getItem("contracts")) || {}
+                const firstContractKey = Object.keys(savedContracts)[0]
+
+                if (firstContractKey) {
+                    const firstContract = savedContracts[firstContractKey]
+                    contractNameInput.value = firstContractKey
+                    contractAddressInput.value = firstContract.address
+                    abiTextarea.value = firstContract.abi
+                }
+            }
+            connectWalletButton.addEventListener("click", async () => {
+                if (web3) {
+                    try {
+                        const accounts = await window.ethereum.request({
+                            method: "eth_requestAccounts",
+                        })
+                        selectedAccount = accounts[0]
+                        console.log("Connected", selectedAccount)
+                        document.getElementById("connectionStatus").textContent = "Connected"
+                        document.getElementById("connectionStatus").style.color = "green"
+                    } catch (err) {
+                        console.error("Error connecting:", err)
+                        document.getElementById("connectionStatus").textContent = "Connection Failed"
+                        document.getElementById("connectionStatus").style.color = "red"
+                    }
+                }
+            })
+            saveContractButton.addEventListener("click", () => {
+                const contractName = contractNameInput.value
+                const contractAddress = contractAddressInput.value
+                const abi = abiTextarea.value
+
+                if (contractName && contractAddress && abi) {
+                    const contracts = JSON.parse(localStorage.getItem("contracts")) || {}
+                    contracts[contractName] = {
+                        address: contractAddress,
+                        abi: abi,
+                    }
+
+                    localStorage.setItem("contracts", JSON.stringify(contracts))
+                    populateContractDropdown()
+
+                    alert("Contract information saved!")
+                } else {
+                    alert("Please enter Contract Name, Address, and ABI.")
+                }
+            })
+
+            callMethodButton.addEventListener("click", () => {
+                const methodName = methodNameInput.value
+                const methodParams = methodParamsInput.value.split(",").map((param) => param.trim())
+
+                if (currentContract && currentContract.methods[methodName]) {
+                    currentContract.methods[methodName]()
+                        .send()
+                        .then((result) => {
+                            console.log("Method result:", result)
+                            document.getElementById("methodResult").textContent =
+                                "Method Result: " + JSON.stringify(result)
+                        })
+                        .catch((err) => {
+                            console.error("Error calling method:", err)
+                            document.getElementById("methodResult").textContent = "Error: " + err.message
+                        })
+                } else {
+                    alert("Please select a contract and enter a valid method name.")
+                }
+            })
+
+            contractSelector.addEventListener("change", async () => {
+                const selectedContractName = contractSelector.value
+                const contracts = JSON.parse(localStorage.getItem("contracts")) || {}
+
+                if (contracts[selectedContractName]) {
+                    console.log(selectedAccount)
+                    const selectedContract = contracts[selectedContractName]
+                    currentContract = new web3.eth.Contract(
+                        JSON.parse(selectedContract.abi),
+                        selectedContract.address,
+                        { from: selectedAccount }
+                    )
+                    console.log(currentContract)
+                } else {
+                    currentContract = null
+                }
+            })
+
+            clearContractsButton.addEventListener("click", () => {
+                localStorage.removeItem("contracts")
+                populateContractDropdown() // Update the dropdown
+                alert("All contracts have been cleared.")
+            })
+        </script>
+    </body>
+</html>
