@@ -227,8 +227,9 @@
                 const methodParams = methodParamsInput.value.split(",").map((param) => param.trim())
 
                 if (currentContract && currentContract.methods[methodName]) {
-                    currentContract.methods[methodName]()
-                        .send()
+                    console.log(...methodParams)
+                    currentContract.methods[methodName](...methodParams)
+                        .send({ from: selectedAccount })
                         .then((result) => {
                             console.log("Method result:", result)
                             document.getElementById("methodResult").textContent =
